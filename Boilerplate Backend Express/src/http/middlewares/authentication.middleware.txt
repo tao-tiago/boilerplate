@@ -1,0 +1,63 @@
+import { Request, Response, NextFunction } from "express"
+import { container } from "tsyringe"
+
+// API's
+import { record } from "../api/record"
+import { movement } from "../api/movement"
+import { permission } from "../api/permission"
+
+// Services
+import { PermissionService } from "../services/permission/permission.service"
+
+const authentication = async (request: Request, response: Response, next: NextFunction) => {
+
+  if (request.path.indexOf("health") !== -1) {
+    return next()
+  }
+
+  const permissionService = container.resolve(PermissionService)
+
+  const nonForbiddenPaths = [
+    "order/webhook",
+    "vouchers/check-voucher"
+  ]
+
+  let accessToken = request.headers.authorization
+
+  if (!accessToken) {
+
+    // Checa se a rota está dentro do array de rotas livres
+    const nonForbidden = nonForbiddenPaths.some(path => {
+
+      // Checa se a rota possui algum parâmetro ${params}
+      const splitPath = path.split("${params}")
+
+      // Checa se a rota está contida na requisição
+      return splitPath.every(split => request.path.indexOf(split) !== -1)
+    })
+
+    if (!nonForbidden) {
+      return response.status(401).json({
+        message: ["Acesso não autorizado"]
+      })
+    }
+
+    accessToken = await permissionService.login() ?? ""
+  }
+
+  record.defaults.headers.Authorization = accessToken
+  movement.defaults.headers.Authorization = accessToken
+  permission.defaults.headers.Authorization = accessToken
+
+  const user = await permissionService.authentication()
+
+  Object.assign(request.headers, {
+    userId: user.id,
+    personId: user.person,
+    profiles: JSON.stringify(user.profiles)
+  })
+
+  next()
+}
+
+export { authentication }

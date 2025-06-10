@@ -1,0 +1,70 @@
+image: node:18.12.0
+
+definitions:
+  services:
+    docker:
+      memory: 2048
+
+  steps:
+    - step: &secrets-scan
+        name: Scan for Secrets
+        script:
+          - pipe: atlassian/git-secrets-scan:0.6.1
+
+    - step: &sonarqube-scan
+        name: SonarQube analysis
+        script:
+          - pipe: sonarsource/sonarqube-scan:1.1.0
+            variables:
+              SONAR_HOST_URL: https://sonarqube.fiibo.digital/
+              SONAR_TOKEN: ${SONAR_TOKEN}
+              EXTRA_ARGS: -Dsonar.projectKey=${BITBUCKET_REPO_SLUG}
+
+pipelines:
+  feat/*:
+      - parallel:
+        - step: *secrets-scan
+        - step:
+            name: "Build T.I."
+            size: 2x
+            caches:
+              - node
+            script:
+              - npm ci
+              - npm run test
+              - npm run build
+            artifacts:
+              - dist/**
+
+  pull-requests:
+      master:
+        - parallel:
+          - step: *secrets-scan
+          - step:
+              name: "Build T.I."
+              size: 2x
+              caches:
+                - node
+              script:
+                - npm ci
+                - npm run test
+                - npm run build
+              artifacts:
+                - dist/**
+          
+  tags:
+    default:
+      - step:
+          - parallel:
+            - step: *secrets-scan
+            - step:
+                name: "Build T.I."
+                size: 2x
+                caches:
+                  - node
+                script:
+                  - npm ci
+                  - npm run test
+                  - npm run build
+                artifacts:
+                  - dist/**

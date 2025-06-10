@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "steoates.autoimport",
+    "dbaeumer.vscode-eslint",
+    "ionutvmi.path-autocomplete",
+    "EditorConfig.EditorConfig",
+    "donjayamanne.githistory",
+    "eamodio.gitlens"
+  ],
+}

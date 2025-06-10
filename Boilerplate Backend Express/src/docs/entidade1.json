@@ -1,0 +1,16 @@
+{
+  "/": {
+    "get": {
+      "tags": [
+        "Index"
+      ],
+      "summary": "Devolve valor enviado",
+      "description": "Devolve valor enviado",
+      "responses": {
+        "200": {
+          "description": "retorno da mensagem"
+        }
+      }
+    }
+  }
+}
