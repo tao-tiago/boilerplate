@@ -1,1 +1,0 @@
-export { generateSecureCode } from "./generateSecureCode"
